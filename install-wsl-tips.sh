@@ -343,6 +343,38 @@ parse_git_branch() {
     git branch --show-current 2>/dev/null | sed 's#^# (#' | sed 's#$#)#'
 }
 
+# --- Configurações do histórico do Bash ---
+# Append history instead of overwriting
+shopt -s histappend
+
+# Append each command to the history file as soon as it's run
+PROMPT_COMMAND='history -a'
+
+# --- Função para buscar no histórico ---
+his() {
+    local term="$1"
+    local limit="${2:-0}"
+
+    if [ -z "$term" ]; then
+        echo "Uso: his <termo> [limite]"
+        return 1
+    fi
+
+    local results
+    results=$(grep -i -n "$term" "$HOME/.bash_history")
+
+    if [ -z "$results" ]; then
+        echo "Nenhum resultado encontrado para: $term"
+        return 0
+    fi
+
+    if [ "$limit" -gt 0 ]; then
+        results=$(echo "$results" | tail -n "$limit")
+    fi
+
+    echo "$results" | awk -F: '{printf "\033[1;34m%-6s\033[0m %s\n", $1, $2}' | grep --color=always -i "$term"
+}
+
 # --- Define a aparência do prompt (PS1) ---
 # Adiciona cores e chama a função parse_git_branch
 # \u = usuário, \h = nome da máquina, \w = diretório atual
